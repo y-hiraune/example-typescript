@@ -509,6 +509,318 @@ Mary Sue,14,1
   });
 });
 
+practice("# 関数", () => {
+  function range(min: number, max: number): number[] {
+    const result = [];
+    for (let i = min; i <= max; i++) {
+      result.push(i);
+    }
+    // return と戻り値の間に改行を入れてしまうとコンパイルエラー
+    return result;
+  }
+
+  console.log(range(5, 10));
+
+  function helloWorldNTimes(n: number): void {
+    // 早期リターン
+    if (n >= 100) {
+      console.log(`${n}回なんて無理です！！！`);
+      return;
+    }
+    for (let i = 0; i < n; i++) {
+      console.log("Hello, World!");
+    }
+  }
+
+  helloWorldNTimes(5);
+  helloWorldNTimes(150);
+
+  practice("## 関数式で作る", () => {
+    type Human = {
+      height: number;
+      weight: number;
+    };
+    const calcBMI = function ({ height, weight }: Human): number {
+      return weight / height ** 2;
+    };
+    const uhyo: Human = { height: 1.84, weight: 72 };
+    console.log(calcBMI(uhyo));
+  });
+
+  practice("## アロー関数式で作る", () => {
+    type Human = {
+      height: number;
+      weight: number;
+    };
+    // オブジェクトリテラルを return する場合は、({ foo }) のように囲う必要がある
+    const calcBMI = ({ height, weight }: Human): number => weight / height ** 2;
+    const uhyo: Human = { height: 1.84, weight: 72 };
+    console.log(calcBMI(uhyo));
+  });
+
+  practice("## メソッド記法で作る", () => {
+    const obj = {
+      // メソッド記法
+      double(num: number): number {
+        return num * 2;
+      },
+      // 通常の記法＋アロー関数
+      double2: (num: number): number => num * 2,
+    };
+
+    console.log(obj.double(100));
+    console.log(obj.double2(-50));
+  });
+
+  practice("## 可変長引数", () => {
+    const sum = (...args: number[]): number => {
+      let result = 0;
+      for (const num of args) {
+        result += num;
+      }
+      return result;
+    };
+
+    console.log(sum(1, 10, 100));
+    console.log(sum(123, 456));
+    console.log(sum());
+
+    const nums = [1, 2, 3, 4, 5];
+    console.log(sum(...nums));
+
+    const sum3 = (a: number, b: number, c: number) => a + b + c;
+
+    const nums3: [number, number, number] = [1, 2, 3];
+    console.log(sum3(...nums3));
+  });
+
+  practice("## オプショナル引数", () => {
+    // オプショナルな引数であれば前に定義できない
+    const toLowerOrUpper = (str: string, upper: boolean = false): string => {
+      if (upper) {
+        return str.toUpperCase();
+      } else {
+        return str.toLowerCase();
+      }
+    };
+    console.log(toLowerOrUpper("Hello"));
+    console.log(toLowerOrUpper("Hello", false));
+    console.log(toLowerOrUpper("Hello", true));
+  });
+
+  practice("## コールバック関数の引数", () => {
+    type User = { name: string; age: number };
+    const getName = (u: User): string => {
+      console.log("u is", u);
+      return u.name;
+    };
+    const users: User[] = [
+      { name: "uhyo", age: 26 },
+      { name: "John Smith", age: 15 },
+    ];
+
+    const names = users.map(getName);
+    console.log(names);
+
+    console.log(
+      "20歳以上のユーザ",
+      users.filter((user: User) => user.age >= 20)
+    );
+    console.log(
+      "すべてのユーザが20際以上",
+      users.every((user: User) => user.age >= 20)
+    );
+    console.log(
+      "60歳以上のユーザが1人以上",
+      users.some((user: User) => user.age >= 60)
+    );
+    console.log(
+      "名前がJohnで始まるユーザ",
+      users.find((user: User) => user.name.startsWith("John"))
+    );
+  });
+
+  practice("## 関数の型", () => {
+    // 引数名 repeatNum は型チェックに影響せず、コーディング支援の充実のために使える
+    type F = (repeatNum: number) => string;
+
+    // 引数の型は、型注釈Fによって型推論が行われるため省略可能（逆方向の推論 contextual typing）
+    const xRepeat: F = (num): string => "x".repeat(num);
+    console.log(xRepeat(3));
+
+    // 戻り値の型注釈が無いとコンパイルエラーの発生箇所と内容が変わってしまう
+    // 関数の中身が真実である場合以外は、基本的に戻り値の型を指定しておいた方が安全
+    function range(min: number, max: number): number[] {
+      const result = [];
+      for (let i = min; i <= max; i++) {
+        result.push(i);
+      }
+      return result;
+    }
+    const arr = range(5, 10);
+    for (const value of arr) console.log(value);
+
+    const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const arr2 = nums.filter((x) => x % 3 === 0);
+    console.log(arr2);
+
+    practice("### コールシグネチャ", () => {
+      type MyFunc = {
+        isUsed?: boolean;
+        (arg: number): void;
+      };
+
+      const double: MyFunc = (arg: number) => {
+        console.log(arg * 2);
+      };
+
+      // プロパティを持つ関数としても呼び出せる
+      double.isUsed = true;
+      console.log(double.isUsed);
+      double(1000);
+    });
+  });
+
+  practice("## 関数型の部分型関係", () => {
+    type HasName = {
+      name: string;
+    };
+    type HasNameAndAge = {
+      name: string;
+      age: number;
+    };
+
+    const fromAge = (age: number): HasNameAndAge => ({
+      name: "John Smith",
+      age,
+    });
+
+    const f: (age: number) => HasName = fromAge;
+    const obj: HasName = f(100);
+    console.log(obj);
+
+    const showName = (obj: HasName) => {
+      console.log(obj.name);
+    };
+    const g: (obj: HasNameAndAge) => void = showName;
+
+    g({
+      name: "uhyo",
+      age: 26,
+    });
+
+    type UnaryFanc = (age: number) => number;
+    type BinaryFunc = (left: number, right: number) => number;
+    const double: UnaryFanc = (age) => age * 2;
+    const add: BinaryFunc = (left, right) => left + right;
+
+    const bin: BinaryFunc = double;
+    console.log(bin(10, 100));
+
+    type Obj = {
+      func: (arg: HasName) => string;
+      // メソッド記法で宣言された関数型
+      method(arg: HasName): string;
+    };
+
+    const something: Obj = {
+      func: (user) => user.name,
+      method: (user) => user.name,
+    };
+
+    const getAge = (user: HasNameAndAge) => String(user.age);
+
+    // コンパイルエラー
+    // something.func = getAge;
+    // エラーが発生しないため、部分型関係成立の条件が緩くなってしまうため、メソッド記法で定義するのは避けた方がいい
+    something.method = getAge;
+
+    function sum(nums: readonly number[]): number {
+      let result = 0;
+      for (const num of nums) {
+        result += num;
+      }
+      return result;
+    }
+
+    const nums1: readonly number[] = [1, 10, 100];
+    console.log(sum(nums1));
+    const nums2: number[] = [1, 1, 2, 3, 5, 8];
+    console.log(sum(nums2));
+
+    type User = { name: string };
+    type ReadonlyUser = { readonly name: string };
+
+    const uhyoify = (user: User) => {
+      user.name = "uhyo";
+    };
+
+    const john: ReadonlyUser = {
+      name: "John Smith",
+    };
+    //john.name = "Nanashi";
+
+    // オブジェクトでは、 readonly が書き換わってしまう場合がある
+    uhyoify(john);
+
+    console.log(john.name);
+  });
+
+  practice("## ジェネリクス", () => {
+    function repeat<T>(element: T, length: number): T[] {
+      const result: T[] = [];
+      for (let i = 0; i < length; i++) {
+        result.push(element);
+      }
+      return result;
+    }
+
+    console.log(repeat<string>("a", 5));
+    console.log(repeat<number>(123, 3));
+    console.log(repeat("a", 5));
+  });
+
+  practice("## スコープ", () => {});
+
+  practice("## FizzBuzz", () => {
+    const sequence = (start: number, end: number): number[] => {
+      const result: number[] = [];
+      for (let i = start; i < end; i++) {
+        result.push(i);
+      }
+      return result;
+    };
+    const getFizzBuzzString = (i: number): string => {
+      if (i % 3 === 0 && i % 5 === 0) {
+        return "FizzBuzz";
+      } else if (i % 3 === 0) {
+        return "Fizz";
+      } else if (i % 5 === 0) {
+        return "Buzz";
+      }
+      return String(i);
+    };
+    for (const i of sequence(1, 100)) {
+      const message = getFizzBuzzString(i);
+      console.log(message);
+    }
+  });
+
+  practice("## Custom Map", () => {
+    function map<T, U>(array: T[], callback: (value: T) => U): U[] {
+      const result: U[] = [];
+      for (const element of array) {
+        result.push(callback(element));
+      }
+      return result;
+    }
+
+    const data = [1, 1, 2, 3, 5, 8, 13];
+    const result = map(data, (x) => x * 10);
+    console.log(result);
+  });
+});
+
 practice("# Read line", () => {
   function getDefaultName() {
     return "名無し";
