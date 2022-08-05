@@ -1252,6 +1252,711 @@ practice("# クラス", () => {
   });
 });
 
+practice("# 高度な型", () => {
+  practice("## ユニオン型とインターセクション型", () => {
+    practice("### ユニオン型", () => {
+      type Animal = {
+        species: string;
+        age: string;
+      };
+      type Human = {
+        name: string;
+        age: number;
+      };
+  
+      type User = Animal | Human;
+  
+      const tama: User = {
+        species: "Felis silvestris catus",
+        age: "永遠の17歳",
+      };
+      const uhyo: User = {
+        name: "uhyo",
+        age: 26,
+      };
+  
+      function showAge(user: User) {
+        const age = user.age;
+        console.log(age);
+      }
+    });
+
+    practice("### インターセクション型", () => {
+      type Animal = {
+        species: string;
+        age: number;
+      };
+      type Human = Animal & {
+        name: string;
+      };
+
+      const tama: Animal = {
+        species: "Felis silvestris catus",
+        age: 3,
+      };
+      const uhyo: Human = {
+        species: "Homo sapiens sapiens",
+        age: 26,
+        name: "uhyo",
+      };
+
+      function showAge(animal: Animal) {
+        const age = animal.age;
+        console.log(age);
+      }
+
+      // never 型になる
+      // const StringAndNumber: string & number = "str";
+      // never 型にならないが、値は作れない
+      // const cat1: Animal & string = "cat";
+      // const cat2: Animal & string = {
+      //   species: "Homo sapience sapience",
+      //   age: 3,
+      // };
+    });
+
+    type Human = { name: string };
+    type Animal = { species: string };
+    function getName(human: Human) {
+      return human.name;
+    }
+    function getSpecies(animal: Animal) {
+      return animal.species;
+    }
+
+    const mysteryFunc = Math.random() < 0.5 ? getName : getSpecies;
+
+    // どちらの型で受け取ればいいかわからないためコンパイルエラー
+    // mysteryFunc({ name: "uhyo" });
+    // mysteryFunc({ species: "cat" });
+
+    const uhyo: Human & Animal = {
+      name: "uhyo",
+      species: "Homo sapiens sapiens",
+    };
+
+    const value = mysteryFunc(uhyo);
+    console.log(value);
+
+    practice("### オプショナル", () => {
+      type Human = {
+        name: string;
+        // exactOptionalPropertyTypes: true だと明示的に undefined を設定できないためコンパイルエラー
+        // age?: number;
+        age?: number | undefined;
+      };
+
+      const uhyo: Human = {
+        name: "uhyo",
+        age: 25,
+      };
+
+      const john: Human = {
+        name: "John Smith",
+        age: undefined,
+      };
+
+      const taro: Human = {
+        name: "Taro Yamada",
+      };
+
+      practice("#### オプショナルチェイニング", () => {
+        type Human = {
+          name: string,
+          age: number,
+        };
+
+        function useMabyeHuman(human: Human | undefined) {
+          const age = human?.age;
+          console.log(age);
+        }
+
+        type GetTimeFunc = () => Date;
+
+        function useTime(getTimeFunc: GetTimeFunc | undefined) {
+          // ?. 以降はまとめて飛ばすため undefined.toString() にはならない
+          const timeStringOrUndefined = getTimeFunc?.().toString();
+        }
+      });
+    });
+  });
+
+  practice("## リテラル型", () => {
+    type FooString = "foo";
+
+    const foo: FooString = "foo";
+
+    // "foo" しか指定できないためエラー
+    // const bar: FooString = "bar";
+
+    const one: 1 = 1;
+    const t: true = true;
+    const tree: 3n = 3n;
+
+    function getHelloStr(): `Hello, ${string}!`  {
+      const rand = Math.random();
+      if (rand < 0.3) {
+        return `Hello, world!`;
+      } else if (rand < 0.6) {
+        return `Hello, my world!`;
+      } else if (rand < 0.9) {
+        // テンプレートリテラル型に合わないためコンパイルエラー
+        // return `Hello, world.`;
+        return `Hello, world.!`;
+      } else {
+        // テンプレートリテラル型に合わないためコンパイルエラー
+        // return `Hell, world!`;
+        return `Hello, world!`;
+      }
+    }
+  });
+
+  practice("## リテラル型とユニオン型", () => {
+    function signNumber(type: "plus" | "minus") {
+      return type === "plus" ? 1 : -1;
+    }
+
+    console.log(signNumber("plus"));
+    console.log(signNumber("minus"));
+    // コンパイルエラー
+    // console.log(signNumber("uhyo"));
+  });
+
+  practice("## リテラル型の widening", () => {
+    const uhyo1 = "uhyo";
+    // リテラル型に推論されそうな場合はプリミティブ型に変換
+    let uhyo2 = "uhyo";
+
+    const uhyo = {
+      name: "uhyo",
+      age: 26,
+    };
+    uhyo.name = "john";
+  });
+
+  practice("## 型の絞り込み", () => {
+    type SignType = "plus" | "minus";
+    function signNumber(type: SignType) {
+      return type === "plus" ? 1 : -1;
+    }
+
+    function numberWithSign(num: number, type: SignType | "none") {
+      if (type === "none") {
+        return 0;
+      } else {
+        return num * signNumber(type);
+      }
+    }
+    function numberWithSign2(num: number, type: SignType | "none") {
+      if (type === "none") {
+        return 0;
+      }
+      return num * signNumber(type);
+    }
+    function numberWithSign3(num: number, type: SignType | "none") {
+      return type === "none" ? 0 : num * signNumber(type);
+    }
+
+    console.log(numberWithSign(5, "plus"));
+    console.log(numberWithSign(5, "minus"));
+    console.log(numberWithSign(5, "none"));
+
+    console.log(numberWithSign2(5, "minus"));
+    console.log(numberWithSign3(3, "none"));
+
+    console.log(typeof "uhyo");
+    console.log(typeof 26);
+    console.log(typeof {});
+    console.log(typeof undefined);
+
+    function formatNumberOrString(value: string | number) {
+      if (typeof value === "number") {
+        return value.toFixed(3);
+      } else {
+        return value;
+      }
+    }
+
+    console.log(formatNumberOrString(3.14));
+    console.log(formatNumberOrString("uhyo"));
+
+    practice("### 疑似的な代数的データ型", () => {
+      // タグ付きユニオン型
+      type Animal = {
+        tag: "animal";
+        species: string;
+      }
+      type Human = {
+        tag: "human";
+        name: string;
+      }
+      type User = Animal | Human;
+
+      function getUserName(user: User) {
+        if (user.tag === "human") {
+          return user.name;
+        } else {
+          return "名無し";
+        }
+      }
+
+      const tama: User = {
+        // 判別用の情報(タグ)としてリテラル型をもつプロパティを用意
+        tag: "animal",
+        species: "Felis silvestris catus",
+      };
+      const uhyo: User = {
+        tag: "human",
+        name: "uhyo",
+      };
+
+      console.log(getUserName(tama));
+      console.log(getUserName(uhyo));
+    });
+
+    practice("### switch", () => {
+      type Animal = {
+        tag: "animal";
+        species: string;
+      }
+      type Human = {
+        tag: "human";
+        name: string;
+      }
+      type Robot = {
+        tag: "robot";
+        name: string;
+      }
+      type User = Animal | Human | Robot;
+
+      function getUserName(user: User): string {
+        switch (user.tag) {
+          case "human":
+            return user.name;
+          case "animal":
+            return "名無し";
+          case "robot":
+            return `CPU ${user.name}`;
+        }
+      }
+    });
+  });
+
+  practice("## keyof型・lookup型", () => {
+    practice("### lookup", () => {
+      type Human = {
+        type: "human";
+        name: string;
+        age: bigint;
+      };
+  
+      function setAge(human: Human, age: Human["age"]) {
+        return {
+          ...human,
+          age,
+        };
+      }
+  
+      const uhyo: Human = {
+        type: "human",
+        name: "uhyo",
+        age: 26n,
+      }
+  
+      const uhyo2 = setAge(uhyo, 27n);
+      console.log(uhyo2);  
+    });
+
+    practice("### keyof", () => {
+      type Human = {
+        name: string;
+        age: number;
+      };
+
+      // プロパティ名をすべて受け入れる "name" | "age" 型が得られる
+      type HumanKeys = keyof Human;
+
+      let key: HumanKeys = "name";
+      key = "age";
+      // コンパイルエラー
+      // key = "hoge";
+
+      const mmConvertionTable = {
+        mm: 1,
+        cm: 10,
+        m: 1e3,
+        km: 1e6,
+      };
+
+      function convertUnits(value: number, unit: keyof typeof mmConvertionTable) {
+        // 引数を mmConvertionTable に存在するプロパティの型に制限することで安全に配列にアクセスさせられる
+        const mmValue = value * mmConvertionTable[unit];
+        return {
+          mm: mmValue,
+          m: mmValue / 1e3,
+          km: mmValue / 1e6,
+        };
+      }
+
+      console.log(convertUnits(5600, "mm"));
+      console.log(convertUnits(300000, "cm"));
+
+      function get<T, K extends keyof T>(obj: T, key: K): T[K] {
+        return obj[key];
+      }
+
+      const uhyo: Human = {
+        name: "uhyo",
+        age: 26,
+      };
+      
+      const uhyoName = get(uhyo, "name");
+      const uhyoAge = get(uhyo, "age");
+    });
+  });
+
+  practice("## as による型アサーション", () => {
+    function getFirstFiveLetters(strOrNum: string | number) {
+      const str = strOrNum as string;
+      return str.slice(0, 5);
+    }
+
+    console.log(getFirstFiveLetters("uhyouhyo"));
+    // ランタイムエラー
+    // console.log(getFirstFiveLetters(123));
+
+    type Animal = {
+      tag: "animal";
+      species: string;
+    }
+    type Human = {
+      tag: "human";
+      name: string;
+    }
+    type User = Animal | Human;
+
+    function getNamesIfAllHuman(users: readonly User[]): string[] | undefined {
+      if (users.every(user => user.tag === "human")) {
+        // 破壊的な要素のある型アサーションを使うのであれば、 TypeScript がやってくれない型の絞込みを代わりに行う場合に限定した方が良い
+        return (users as Human[]).map(user => user.name);
+      }
+      return undefined;
+    }
+
+    practice("### null と undefined を無視", () => {
+      type Human = {
+        name: string;
+        age: number;
+      }
+
+      function getOneUserName(user1?: Human, user2?: Human): string | undefined {
+        if (user1 === undefined && user2 === undefined) {
+          return undefined;
+        }
+        if (user1 !== undefined) {
+          return user1.name;
+        }
+        // ! で undefined の可能性が消える
+        return user2!.name;
+      }
+    });
+
+    practice("### as const", () => {
+      const names1 = ["uhyo", "john", "taro"];
+      const names2 = ["uhyo", "John", "Taro"] as const;
+    });
+  });
+
+  practice("## any 型と unknown 型", () => {
+    // どんな型のオブジェクトを渡してもコンパイルエラーを無視できてしまう
+    // 関数引数の型注釈を書かなくても noImplicitAny コンパイラオプションを指定することでコンパイルエラーを回避できる
+    function doWhatever(obj: any) {
+      console.log(obj.user.name);
+      obj();
+      const result = obj * 10;
+      return result;
+    }
+    // コンパイルエラーにならず、ランタイムエラーになる
+    // doWhatever(3);
+    // doWhatever({
+    //   user: {
+    //     name: "uhyo",
+    //   },
+    // })
+    // doWhatever(() => {
+    //   console.log("hi");
+    // });
+
+    function doNothing(val: unknown) {
+      console.log(val);
+    }
+    doNothing(3);
+    doNothing({
+      user: {
+        name: "uhyo",
+      },
+    })
+    doNothing(() => {
+      console.log("hi");
+    });
+
+    function useUnknown(val: unknown) {
+      if (typeof val === "string") {
+        console.log("valは文字列です");
+        console.log(val.slice(0, 5));
+      } else {
+        console.log("valは文字列以外の何かです");
+        console.log(val);
+      }
+    }
+    useUnknown("foobar");
+    useUnknown(null);
+  });
+
+  practice("## さらに高度な型", () => {
+    practice("### Object 型", () => {
+      type HasToString = {
+        toString: () => string;
+      }
+  
+      function useToString1(value: HasToString & object) {
+        console.log(`value is ${value.toString()}`);
+      }
+  
+      useToString1({
+        toString() {
+          return "foo!";
+        },
+      });
+
+      // object 型を指定することでプリミティブ型をコンパイルエラーにできる
+      // useToString1(3.14);
+    });
+
+    practice("### never 型", () => {
+      function useNever(value: never) {
+        const num: number = value;
+        const str: string = value;
+        const obj: object = value;
+        console.log(`value is ${value}`);
+      }
+
+      // never 型の値を得ることができないためコンパイルエラー
+      // useNever({});
+      // useNever(3.14);
+
+      function thrower(): never {
+        throw new Error("error!!!!");
+      }
+
+      // コンパイルエラーは起きないが後続の処理も実行されない
+      // const result: never = thrower();
+
+      // const str: string = result;
+      // console.log(str);
+    });
+
+    practice("### 型述語（ユーザー定義型ガード）", () => {
+      function isStringOrNumber(value: unknown): value is string | number {
+        // ユーザ定義型を実装と異なるものにしてもコンパイルエラーにならないため、実装者が責任を持つことになる
+        return typeof value === "string" || typeof value === "number";
+      }
+
+      const something: unknown = 123;
+
+      if (isStringOrNumber(something)) {
+        console.log(something.toString());
+      }
+
+      type Human = {
+        type: "Human",
+        name: string,
+        age: number,
+      };
+
+      function isHuman(value: any): value is Human {
+        if (value == null) return false;
+        return (
+          value.type === "Human" &&
+          typeof value.name === "string" &&
+          typeof value.age === "number"
+        );
+      }
+
+      function assertHuman(value: any): asserts value is Human {
+        if (value == null) {
+          throw new Error('Given value is null or undefined');
+        }
+        if (
+          value.type !== "Human" ||
+          typeof value.name !== "string" ||
+          typeof value.age !== "number"
+        ) {
+          throw new Error('Given value is not a Human');
+        }
+      }
+
+      function checkAndUseHuman(value: unknown) {
+        assertHuman(value);
+        const name = value.name;
+      }
+    });
+
+    practice("### 可変長タプル型", () => {
+      type NumberAndStrings = [number, ...string[]];
+      type NumberStringNumber = [number, ...string[], number];
+
+      const arr1: NumberAndStrings = [25, "uhyo", "hyo", "hyo"];
+      const arr2: NumberAndStrings = [25];
+      // コンパイルエラー
+//      const arr3: NumberAndStrings = ["uhyo", "hyo"];
+//      const arr4: NumberAndStrings = [25, 26, 27];
+//      const arr5: NumberAndStrings = [];
+
+      type NSN = [number, string, number];
+      type SNSNS = [string, ...NSN, string];
+    });
+
+    practice("### mapped types", () => {
+      type Fruit = "apple" | "orange" | "strawberry";
+
+      type FruitNumbers = {
+        [P in Fruit]: number
+      };
+
+      const numbers: FruitNumbers = {
+        apple: 3,
+        orange: 10,
+        strawberry: 20,
+      };
+
+      type FruitArrays = {
+        [P in Fruit]: P[]
+      }
+
+      const numberArrays: FruitArrays = {
+        apple: ["apple", "apple"],
+        orange: ["orange", "orange", "orange"],
+        strawberry: [],
+      };
+    });
+
+    practice("### conditional types", () => {
+      type RestArgs<M> = M extends "string" ? [string, string] : [number, number, number];
+
+      function func<M extends "string" | "number">(mode: M, ...args: RestArgs<M>) {
+        console.log(mode, ...args);
+      }
+
+      func("string", "uhyo", "hyo");
+      func("number", 1, 2, 3);
+
+      // コンパイルエラー
+      // func("string", 1, 2);
+      // func9"number", "uhyo", 'hyo');
+    });
+
+    practice("### 組み込みの型", () => {
+      type T1 = Readonly<{
+        name: string,
+        age: number,
+      }>;
+
+      type T2 = Partial<{
+        name: string,
+        age: number,
+      }>;
+
+      type T3 = Pick<{
+        name: string,
+        age: number,
+      }, "age">;
+
+      type Union = "uhyo" | "hyo" | 1 | 2 | 3;
+      type T4 = Extract<Union, string>;
+      type T5 = Exclude<Union, string>;
+      // NonNullable === Exclude<Union, null | undefined>
+
+      practice("#### any を is で書き換え", () => {
+
+        type Human = {
+          type: "Human",
+          name: string,
+          age: number,
+        };
+  
+        function isPropertyAccessible(value: unknown): value is { [key: string]: unknown } {
+          return value != null;
+        }
+
+        function isHuman(value: unknown): value is Human {
+          if (!isPropertyAccessible(value)) return false;
+          return (
+            value.type === "Human" &&
+            typeof value.name === "string" &&
+            typeof value.age === "number"
+          );
+        }  
+      });
+    });
+  });
+
+  practice("## 力試し", () => {
+    type Some<T> = {
+      // hasValue: true のような boolean でも OK
+      tag: "some";
+      value: T;
+    };
+    type None = {
+      tag: "none";
+    };
+    type Option<T> = Some<T> | None;
+
+    function isSome<T>(obj: Option<T>): obj is Some<T> {
+      return obj.tag === "some";
+    }
+
+    function showNumberIfExists(obj: Option<number>) {
+      if (isSome(obj)) {
+        console.log(obj.value);
+      }
+    }
+
+    function mapOption<T, U>(obj: Option<T>, callback: (value: T) => U): Option<U> {
+      switch (obj.tag) {
+        case "some": 
+          return {
+            tag: "some",
+            value: callback(obj.value),
+          };
+        case "none":
+          return {
+            tag: "none",
+          };
+      }
+    }
+
+    function doubleOption(obj: Option<number>) {
+      return mapOption(obj, x => x * 2);
+    }
+
+    const four: Option<number> = {
+      tag: "some",
+      value: 4,
+    };
+
+    const nothing: Option<number> = {
+      tag: "none",
+    };
+
+    showNumberIfExists(four);
+    showNumberIfExists(nothing);
+
+    console.log(doubleOption(four));
+    console.log(doubleOption(nothing));
+  });
+});
+
 practice("# Read line", () => {
   function getDefaultName() {
     return "名無し";
